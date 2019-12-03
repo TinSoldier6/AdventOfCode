@@ -16,10 +16,7 @@ import (
 // f = floor(m / 3) - 2
 // total = sum(f)
 
-func part1(r io.Reader) (result string) {
-	input, err := readLines(r)
-	check(err)
-
+func part1(input []string) (result string) {
 	var totalFuel int
 	for _, line := range input {
 		mass, err := strconv.Atoi(line)
@@ -32,8 +29,20 @@ func part1(r io.Reader) (result string) {
 
 }
 
-func part2(r io.Reader) (result string) {
-	return ""
+func part2(input []string) (result string) {
+
+	var totalFuel int
+	for _, line := range input {
+		mass, err := strconv.Atoi(line)
+		check(err)
+		fuel := mass/3 - 2
+		for ; fuel > 0; fuel = fuel/3 - 2 {
+			totalFuel += fuel
+		}
+	}
+
+	return strconv.Itoa(totalFuel)
+
 }
 
 func main() {
@@ -46,8 +55,10 @@ func main() {
 		file = bytes.NewReader(b)
 	}
 
-	fmt.Println(part1(file))
-	fmt.Println(part2(file))
+	input, err := readLines(file)
+	check(err)
+	fmt.Println(part1(input))
+	fmt.Println(part2(input))
 
 }
 

@@ -61,7 +61,7 @@ func readLines(r io.Reader) (lines []string, err error) {
 
 func check(err error) {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "%s: %s", os.Args[0], err)
 		os.Exit(1)
 	}
 }

@@ -14,89 +14,94 @@ type point struct {
 	x, y int
 }
 
-func (p1 point) right() point {
-	return point{p1.x + 1, p1.y}
-}
+type path map[point]int
 
-func (p1 point) left() point {
-	return point{p1.x - 1, p1.y}
-}
+func walk(moves []string) path {
+	path := make(path)
 
-func (p1 point) up() point {
-	return point{p1.x, p1.y + 1}
-}
+	x, y := 0, 0
+	dx, dy := 0, 0
+	total := 0
 
-func (p1 point) down() point {
-	return point{p1.x, p1.y - 1}
-}
-
-const bufsize = 1 << 16
-
-func newPath(moves []string) []point {
-	next := point{0, 0}
-	path := make([]point, 0, bufsize)
-
-	for _, move := range moves {
-		dir := move[0]
-		mag, err := strconv.Atoi(move[1:])
+	for _, m := range moves {
+		steps, err := strconv.Atoi(m[1:])
 		check(err)
-		fmt.Println(rune(dir), mag)
-		switch dir {
+		switch m[0] {
 		case 'R':
-			for ; mag > 0; mag-- {
-				next = next.right()
-				path = append(path, next)
-				fmt.Println(next)
-			}
+			dx, dy = 1, 0
 		case 'L':
-			for ; mag > 0; mag-- {
-				next = next.left()
-				path = append(path, next)
-			}
+			dx, dy = -1, 0
 		case 'U':
-			for ; mag > 0; mag-- {
-				next = next.up()
-				path = append(path, next)
-			}
+			dx, dy = 0, 1
 		case 'D':
-			for ; mag > 0; mag-- {
-				next = next.down()
-				path = append(path, next)
-			}
-		default:
+			dx, dy = 0, -1
+		}
+
+		for ; steps > 0; steps-- {
+			x += dx
+			y += dy
+			total++
+			path[point{x, y}] = total
 		}
 	}
 
 	return path
+
 }
 
-func part1(input [][]string) int {
-	wire1 := newPath(input[0])
-	wire2 := newPath(input[1])
-
-	mark := make(map[point]int)
-
-	for _, p := range wire1 {
-		mark[p] |= 1
-	}
-
-	for _, p := range wire2 {
-		mark[p] |= 2
-	}
-
-	origin := point{0, 0}
-	cross := make([]int, 0, len(mark))
-	for k, v := range mark {
-		if v == 3 {
-			cross = append(cross, dist(origin, k))
+func intersections(points1, points2 path) path {
+	intersect := make(path)
+	for point, length1 := range points1 {
+		if length2, ok := points2[point]; ok {
+			intersect[point] = length1 + length2
 		}
 	}
 
-	min := cross[0]
-	for _, d := range cross {
-		min = intMin(min, d)
+	return intersect
+
+}
+
+func part1(input [][]string) int {
+	wire1 := walk(input[0])
+	wire2 := walk(input[1])
+
+	intersects := intersections(wire1, wire2)
+
+	distances := make(path)
+	for point := range intersects {
+		distances[point] = intAbs(point.x) + intAbs(point.y)
 	}
 
+	min := 0
+	for _, min = range distances {
+		break
+	}
+	for _, d := range distances {
+		if d < min {
+			min = d
+		}
+	}
+	
+	return min
+
+}
+
+func part2(input [][]string) int {
+	wire1 := walk(input[0])
+	wire2 := walk(input[1])
+
+	intersects := intersections(wire1, wire2)
+
+	min := 0
+	for _, min = range intersects {
+		break
+	}
+	for _, d := range intersects {
+		if d < min {
+			min = d
+		}
+	}
+	
 	return min
 
 }
@@ -115,6 +120,7 @@ func main() {
 	check(err)
 
 	fmt.Println(part1(input))
+	fmt.Println(part2(input))
 
 }
 

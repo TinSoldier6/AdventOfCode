@@ -11,6 +11,10 @@ const (
 	MUL
 	INP
 	OUT
+	JNZ
+	JZ
+	LT
+	EQ
 	HLT = 99
 )
 
@@ -37,25 +41,23 @@ func (m *machine) fetch() int {
 }
 
 func (m *machine) load(r int) {
-	addr := 0
+	addr := m.ip
+	op := m.fetch()
 	switch (m.op / MODEBITS[r]) % 10 {
 	case REL:
-		addr = m.fetch()
+		addr = op
 	case IMM:
-		addr = m.ip
-		m.ip++
 	}
 	m.regs[r] = m.mem[addr]
 }
 
 func (m *machine) store(r int) {
-	addr := 0
+	addr := m.ip
+	op := m.fetch()
 	switch (m.op / MODEBITS[r]) % 10 {
 	case REL:
-		addr = m.fetch()
+		addr = op
 	case IMM:
-		addr = m.ip
-		m.ip++
 	}
 	m.mem[addr] = m.regs[r]
 }
@@ -86,6 +88,42 @@ func (m *machine) out() {
 	fmt.Printf("%v ", m.regs[0])
 }
 
+func (m *machine) jnz() {
+	m.load(0)
+	m.load(1)
+	if m.regs[0] != 0 {
+		m.ip = m.regs[1]
+	}
+}
+
+func (m *machine) jz() {
+	m.load(0)
+	m.load(1)
+	if m.regs[0] == 0 {
+		m.ip = m.regs[1]
+	}
+}
+
+func (m *machine) lt() {
+	m.load(0)
+	m.load(1)
+	m.regs[2] = 0
+	if m.regs[0] < m.regs[1] {
+		m.regs[2] = 1
+	}
+	m.store(2)
+}
+
+func (m *machine) eq() {
+	m.load(0)
+	m.load(1)
+	m.regs[2] = 0
+	if m.regs[0] == m.regs[1] {
+		m.regs[2] = 1
+	}
+	m.store(2)
+}
+
 func (m *machine) hlt() {
 	m.halted = true
 }
@@ -107,6 +145,14 @@ func (m *machine) next() bool {
 		m.inp()
 	case OUT:
 		m.out()
+	case JNZ:
+		m.jnz()
+	case JZ:
+		m.jz()
+	case LT:
+		m.lt()
+	case EQ:
+		m.eq()
 	case HLT:
 		m.hlt()
 		return false

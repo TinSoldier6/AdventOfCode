@@ -21,37 +21,69 @@ func parseOrbits(input []string) [][]string {
 	return list
 }
 
-func getPrimaryOrbits(input [][]string) map[string]string {
-	orbits := make(map[string]string)
+type orbitalSystem map[string]string
 
-	for _, planet := range input {
-		orbits[planet[1]] = planet[0]
+func newOrbitalSystem(orbits [][]string) (system orbitalSystem) {
+	system = make(orbitalSystem)
+
+	for _, planet := range orbits {
+		system[planet[1]] = planet[0]
 	}
 
-	orbits["COM"] = ""
-
-	return orbits
+	return system
 }
 
-func countOrbits(orbits map[string]string) int {
-	count := 0
+func (o orbitalSystem) getPath(to, from string) (path []string) {
 
-	for planet := range orbits {
-		for planet != "COM" {
-			satellite := planet
-			planet = orbits[satellite]
-			count++
-		}
+	if to == from {
+		return path
 	}
 
-	return count
+	for nextPlanet := o[from]; nextPlanet != ""; nextPlanet = o[nextPlanet] {
+		path = append(path, nextPlanet)
+	}
+
+	if len(path) > 0 && path[len(path)-1] != to { // No path to destination
+		path = []string{}
+	}
+
+	return path
 }
 
-func part1(input []string) {
+func reverse(in []string) {
+	for left, right := 0, len(in)-1; left < right; left, right = left+1, right-1 {
+		in[left], in[right] = in[right], in[left]
+	}
+}
+
+func countAllJumps(input []string) int {
 	orbits := parseOrbits(input)
-	primary := getPrimaryOrbits(orbits)
-	count := countOrbits(primary)
-	fmt.Println(count)
+	system := newOrbitalSystem(orbits)
+
+	jumps := 0
+	for planet := range system {
+		path := system.getPath("COM", planet)
+		jumps += len(path)
+	}
+
+	return jumps
+}
+
+func countOrbitalTransfers(input []string) int {
+	orbits := parseOrbits(input)
+	system := newOrbitalSystem(orbits)
+
+	myPath := system.getPath("COM", "YOU")
+	santaPath := system.getPath("COM", "SAN")
+
+	reverse(myPath)
+	reverse(santaPath)
+
+	for len(myPath) > 0 && len(santaPath) > 0 && myPath[0] == santaPath[0] {
+		myPath, santaPath = myPath[1:], santaPath[1:]
+	}
+
+	return len(myPath) + len(santaPath)
 }
 
 func main() {
@@ -67,7 +99,8 @@ func main() {
 	input, err := readLines(file)
 	check(err)
 
-	part1(input)
+	fmt.Println(countAllJumps(input))
+	fmt.Println(countOrbitalTransfers(input))
 }
 
 func readLines(r io.Reader) (lines []string, err error) {
